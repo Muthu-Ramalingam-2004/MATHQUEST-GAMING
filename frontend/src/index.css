@@ -1,0 +1,257 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+/* ============================================================
+   TAILWIND V4 THEME — Static Tokens (resolved at build time)
+   ============================================================ */
+@theme {
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Outfit", sans-serif;
+
+  /* ── BRAND COLORS ── */
+  --color-primary: #7c3aed;
+  --color-primary-hover: #6d28d9;
+  --color-secondary: #f97316;
+  --color-accent: #10b981;
+
+  /* ── GAME UI TOKENS ── */
+  --color-xp-purple: #7c3aed;
+  --color-xp-purple-dark: #6d28d9;
+  --color-coin-gold: #fbbf24;
+  --color-coin-gold-dark: #d97706;
+  --color-heart-red: #ef4444;
+  --color-streak-orange: #f97316;
+  --color-coral: #f97316;
+  --color-mint: #10b981;
+
+  /* ── SEMANTIC SURFACE TOKENS (Light defaults — can be overridden via CSS vars) ── */
+  --color-math-bg: var(--math-bg, #faf8f5);
+  --color-math-card: var(--math-card, #ffffff);
+  --color-math-border: var(--math-border, #e2e8f0);
+  --color-math-text: var(--math-text, #1e293b);
+  --color-math-text-muted: var(--math-text-muted, #64748b);
+
+  /* ── GLOW SHADOWS ── */
+  --shadow-neon-purple: 0 0 15px rgba(124, 58, 237, 0.2);
+  --shadow-neon-gold: 0 0 15px rgba(251, 191, 36, 0.25);
+  --shadow-neon-green: 0 0 15px rgba(16, 185, 129, 0.2);
+  --shadow-neon-orange: 0 0 15px rgba(249, 115, 22, 0.2);
+
+  /* === ANIMATION ALIASES === */
+  --animate-float: float 4s ease-in-out infinite;
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-wiggle: wiggle 0.5s ease-in-out infinite;
+}
+
+/* ── ROOT CSS VARIABLE DEFAULTS (Light mode) ── */
+:root {
+  --math-bg: #faf8f5;
+  --math-card: #ffffff;
+  --math-border: #e2e8f0;
+  --math-text: #1e293b;
+  --math-text-muted: #64748b;
+}
+
+/* ── DARK MODE OVERRIDES ── */
+.dark {
+  --math-bg: #0f1012;
+  --math-card: #18191c;
+  --math-border: #27282b;
+  --math-text: #f1f5f9;
+  --math-text-muted: #94a3b8;
+}
+
+/* ============================================================
+   KEYFRAME ANIMATIONS
+   ============================================================ */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-up {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes bounce-short {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to   { background-position: 200% center; }
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  14%       { transform: scale(1.15); }
+  28%       { transform: scale(1); }
+  42%       { transform: scale(1.1); }
+  70%       { transform: scale(1); }
+}
+
+@keyframes progress-fill {
+  from { width: 0%; }
+  to   { width: var(--target-width, 100%); }
+}
+
+/* ============================================================
+   ANIMATION UTILITY CLASSES
+   ============================================================ */
+.animate-fade-in      { animation: fade-in 0.4s ease forwards; }
+.animate-scale-up     { animation: scale-up 0.35s ease forwards; }
+.animate-slide-up     { animation: slide-up 0.4s ease forwards; }
+.animate-slide-in-right { animation: slide-in-right 0.35s ease forwards; }
+.animate-bounce-short { animation: bounce-short 1s ease-in-out infinite; }
+.animate-bounce-slow  { animation: bounce-slow 2s ease-in-out infinite; }
+.animate-float        { animation: float 4s ease-in-out infinite; }
+.animate-pulse-slow   { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+.animate-wiggle       { animation: wiggle 0.5s ease-in-out infinite; }
+.animate-spin-slow    { animation: spin-slow 3s linear infinite; }
+.animate-heartbeat    { animation: heartbeat 1.5s ease-in-out infinite; }
+.animate-shimmer      {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Stagger animation delays for grid items */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.10s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.20s; }
+.stagger-5 { animation-delay: 0.25s; }
+
+/* ============================================================
+   GLOBAL BASE STYLES
+   ============================================================ */
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-math-bg);
+  color: var(--color-math-text);
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================================
+   DARK MODE OVERRIDES
+   ============================================================ */
+:root.dark, .dark {
+  --color-math-bg: #0f1012;
+  --color-math-card: #18191c;
+  --color-math-border: #27282b;
+  --color-math-text: #f1f5f9;
+  --color-math-text-muted: #94a3b8;
+}
+
+/* ============================================================
+   CUSTOM SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
+.dark ::-webkit-scrollbar-thumb { background: #27282b; }
+::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
+/* ============================================================
+   GLASS & SURFACES
+   ============================================================ */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(241, 239, 235, 0.8);
+}
+.dark .glass-panel {
+  background: rgba(24, 25, 28, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Elevated card with subtle glow on hover */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+.dark .card-hover:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+/* Neon glow effects */
+.glow-purple { box-shadow: 0 0 20px rgba(124, 58, 237, 0.25); }
+.glow-gold   { box-shadow: 0 0 20px rgba(251, 191, 36, 0.25); }
+.glow-green  { box-shadow: 0 0 20px rgba(16, 185, 129, 0.25); }
+.glow-orange { box-shadow: 0 0 20px rgba(249, 115, 22, 0.25); }
+
+/* ============================================================
+   TYPOGRAPHY UTILITIES
+   ============================================================ */
+.math-font {
+  font-family: 'Cambria Math', 'New Times Roman', serif;
+  font-style: italic;
+}
+
+/* Gradient text */
+.gradient-text-purple {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================================
+   INTERACTIVE ELEMENTS
+   ============================================================ */
+/* Pressing effect for game buttons */
+.btn-press {
+  transition: transform 0.1s ease;
+}
+.btn-press:active {
+  transform: scale(0.96);
+}
+
+/* XP Bar animation */
+.xp-bar-fill {
+  animation: progress-fill 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
