@@ -1,32 +1,22 @@
 import { db } from "../config/db.js";
 
 export const leaderboardController = {
-  // Get dynamic rankings sorted by XP
+  // Get dynamic rankings sorted by XP from PostgreSQL leaderboard view
   getLeaderboard: async (req, res) => {
     try {
-      const rawStore = db.getRawStore();
-      const profiles = [...rawStore.student_profiles];
-
-      // Format for leaderboard display
-      const formatted = profiles.map(p => ({
-        name: p.name,
-        avatar: p.avatar,
-        xp: p.xp,
-        level: p.level,
-        streak: p.streak,
-        isMock: p.isMock || false
+      const result = await db.query("SELECT * FROM leaderboard ORDER BY rank ASC LIMIT 100");
+      
+      const formatted = result.rows.map(row => ({
+        name: row.name,
+        avatar: row.avatar,
+        xp: Number(row.xp),
+        level: Number(row.level),
+        streak: Number(row.streak),
+        isMock: false,
+        rank: Number(row.rank)
       }));
 
-      // Sort descending by XP
-      formatted.sort((a, b) => b.xp - a.xp);
-
-      // Map ranking indexes
-      const ranked = formatted.map((user, index) => ({
-        ...user,
-        rank: index + 1
-      }));
-
-      res.json(ranked);
+      res.json(formatted);
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Server error fetching leaderboard rankings." });

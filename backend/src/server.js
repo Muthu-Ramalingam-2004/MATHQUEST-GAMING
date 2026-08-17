@@ -1,14 +1,19 @@
 import app from "./app.js";
-import { db } from "./config/db.js";
-import { initialQuestions } from "./config/seedData.js";
+import { initializeDatabase } from "./config/dbInit.js";
 
 const PORT = process.env.PORT || 5000;
 
-// Initialize and Seed Database memory before listening
+// Initialize and Seed Database before listening
 try {
-  db.seedQuestions(initialQuestions);
+  await initializeDatabase();
+  console.log("[SERVER BOOT] PostgreSQL Database initialized and seeded successfully.");
 } catch (err) {
-  console.error("Failed to seed question database on boot:", err);
+  console.error("==================================================");
+  console.error("FATAL DATABASE CONNECTION ERROR ON BOOT:");
+  console.error(err);
+  console.error("==================================================");
+  console.error("Application is shutting down because database integration failed.");
+  process.exit(1);
 }
 
 const server = app.listen(PORT, () => {

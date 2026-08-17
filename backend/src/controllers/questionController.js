@@ -6,20 +6,48 @@ export const questionController = {
     const { classGrade, chapterId, difficulty } = req.query;
 
     try {
-      const result = await db.query("SELECT * FROM questions");
-      let list = result.rows;
+      let query = "SELECT * FROM questions WHERE 1=1";
+      const params = [];
+      let paramIdx = 1;
 
       if (classGrade) {
-        list = list.filter(q => Number(q.class_grade) === Number(classGrade));
+        query += ` AND (class_grade = $${paramIdx} OR class = $${paramIdx})`;
+        params.push(Number(classGrade));
+        paramIdx++;
       }
       if (chapterId) {
-        list = list.filter(q => q.chapter_id === chapterId);
+        query += ` AND (chapter_id = $${paramIdx} OR chapter = $${paramIdx})`;
+        params.push(chapterId);
+        paramIdx++;
       }
       if (difficulty) {
-        list = list.filter(q => q.difficulty === difficulty);
+        query += ` AND difficulty = $${paramIdx}`;
+        params.push(difficulty);
+        paramIdx++;
       }
 
-      res.json(list);
+      query += " ORDER BY id ASC";
+
+      const result = await db.query(query, params);
+      
+      // Format questions for maximum frontend compatibility (mapping both snake_case and camelCase options)
+      const formatted = result.rows.map(q => ({
+        ...q,
+        class: q.class_grade || q.class,
+        class_grade: q.class_grade || q.class,
+        chapterId: q.chapter_id || q.chapter,
+        chapter_id: q.chapter_id || q.chapter,
+        type: q.type || q.question_type,
+        question_type: q.type || q.question_type,
+        correctAnswer: q.correct_answer,
+        correct_answer: q.correct_answer,
+        xpReward: q.xp_reward,
+        xp_reward: q.xp_reward,
+        timeLimit: q.time_limit,
+        time_limit: q.time_limit
+      }));
+
+      res.json(formatted);
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Server error fetching questions." });
@@ -35,17 +63,18 @@ export const questionController = {
     }
 
     try {
-      const result = await db.query("SELECT * FROM questions");
-      const question = result.rows.find(q => q.id === questionId);
+      const result = await db.query("SELECT * FROM questions WHERE id = $1", [questionId]);
+      const question = result.rows[0];
 
       if (!question) {
         return res.status(404).json({ error: "Question not found." });
       }
 
+      const qType = question.type || question.question_type;
       let isCorrect = false;
-      if (question.type === "mcq" || question.type === "boolean") {
+      if (qType === "mcq" || qType === "boolean") {
         isCorrect = String(selectedAnswer) === String(question.correct_answer);
-      } else if (question.type === "numerical") {
+      } else if (qType === "numerical") {
         const cleanedUser = String(selectedAnswer).trim().toLowerCase();
         const cleanedCorrect = String(question.correct_answer).trim().toLowerCase();
         isCorrect = cleanedUser === cleanedCorrect;
@@ -60,7 +89,7 @@ export const questionController = {
       });
     } catch (err) {
       console.error(err);
-      res.status(555).json({ error: "Server error during answer verification." });
+      res.status(500).json({ error: "Server error during answer verification." });
     }
   },
 
@@ -84,7 +113,10 @@ export const questionController = {
 
     try {
       const result = await db.query(
-        "INSERT INTO questions (id, class_grade, chapter_id, type, difficulty, question, options, correct_answer, explanation, hint, xp_reward, time_limit) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *",
+        `INSERT INTO questions (
+          id, class_grade, class, chapter_id, chapter, type, question_type, 
+          difficulty, question, options, correct_answer, explanation, hint, xp_reward, time_limit
+        ) VALUES ($1, $2, $2, $3, $3, $4, $4, $5, $6, $7::jsonb, $8, $9, $10, $11, $12) RETURNING *`,
         [
           id, 
           Number(classGrade), 
@@ -100,7 +132,25 @@ export const questionController = {
           Number(timeLimit || 30)
         ]
       );
-      res.status(201).json({ message: "Question created successfully!", question: result.rows[0] });
+
+      const q = result.rows[0];
+      const formatted = {
+        ...q,
+        class: q.class_grade || q.class,
+        class_grade: q.class_grade || q.class,
+        chapterId: q.chapter_id || q.chapter,
+        chapter_id: q.chapter_id || q.chapter,
+        type: q.type || q.question_type,
+        question_type: q.type || q.question_type,
+        correctAnswer: q.correct_answer,
+        correct_answer: q.correct_answer,
+        xpReward: q.xp_reward,
+        xp_reward: q.xp_reward,
+        timeLimit: q.time_limit,
+        time_limit: q.time_limit
+      };
+
+      res.status(201).json({ message: "Question created successfully!", question: formatted });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Server error creating question." });
@@ -125,30 +175,54 @@ export const questionController = {
     } = req.body;
 
     try {
-      // Find question and replace in cache / database
-      const rawStore = db.getRawStore();
-      const index = rawStore.questions.findIndex(q => q.id === id);
+      const result = await db.query(
+        `UPDATE questions SET 
+          class_grade = $1, class = $1,
+          chapter_id = $2, chapter = $2,
+          type = $3, question_type = $3,
+          difficulty = $4, question = $5,
+          options = $6::jsonb, correct_answer = $7,
+          explanation = $8, hint = $9,
+          xp_reward = $10, time_limit = $11
+        WHERE id = $12 RETURNING *`,
+        [
+          Number(classGrade), 
+          chapterId, 
+          type, 
+          difficulty, 
+          question, 
+          options ? JSON.stringify(options) : null, 
+          String(correctAnswer), 
+          explanation, 
+          hint, 
+          Number(xpReward), 
+          Number(timeLimit),
+          id
+        ]
+      );
 
-      if (index === -1) {
+      if (result.rows.length === 0) {
         return res.status(404).json({ error: "Question not found in database." });
       }
 
-      rawStore.questions[index] = {
-        id,
-        class_grade: Number(classGrade),
-        chapter_id: chapterId,
-        type,
-        difficulty,
-        question,
-        options,
-        correct_answer: String(correctAnswer),
-        explanation,
-        hint,
-        xp_reward: Number(xpReward),
-        time_limit: Number(timeLimit)
+      const q = result.rows[0];
+      const formatted = {
+        ...q,
+        class: q.class_grade || q.class,
+        class_grade: q.class_grade || q.class,
+        chapterId: q.chapter_id || q.chapter,
+        chapter_id: q.chapter_id || q.chapter,
+        type: q.type || q.question_type,
+        question_type: q.type || q.question_type,
+        correctAnswer: q.correct_answer,
+        correct_answer: q.correct_answer,
+        xpReward: q.xp_reward,
+        xp_reward: q.xp_reward,
+        timeLimit: q.time_limit,
+        time_limit: q.time_limit
       };
 
-      res.json({ message: "Question updated successfully!", question: rawStore.questions[index] });
+      res.json({ message: "Question updated successfully!", question: formatted });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Server error updating question." });
@@ -160,7 +234,7 @@ export const questionController = {
     const { id } = req.params;
 
     try {
-      await db.query("DELETE FROM questions WHERE id = $1", [id]);
+      const result = await db.query("DELETE FROM questions WHERE id = $1", [id]);
       res.json({ message: "Question deleted successfully from curriculum." });
     } catch (err) {
       console.error(err);

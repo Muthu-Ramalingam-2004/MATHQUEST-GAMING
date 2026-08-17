@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { database } from "./config/database.js";
 
 // Route imports
 import authRoutes from "./routes/authRoutes.js";
@@ -25,6 +26,19 @@ app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/questions", questionRoutes);
 app.use("/api/games", gameRoutes);
+
+// Health check endpoint
+app.get("/api/health", async (req, res) => {
+  const dbHealth = await database.checkHealth();
+  const isHealthy = dbHealth.status === "connected";
+  
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? "UP" : "DOWN",
+    server: "online",
+    database: dbHealth.status,
+    ...(dbHealth.error && { error: dbHealth.error })
+  });
+});
 
 // Base ping endpoint
 app.get("/", (req, res) => {

@@ -28,24 +28,20 @@ export const studentController = {
   // 2. Fetch Student Statistics (Aggregates)
   getStats: async (req, res) => {
     try {
-      const rawStore = db.getRawStore();
-      const profile = rawStore.student_profiles.find(p => p.user_id === req.user.userId);
-      
-      if (!profile) {
+      // 1. Fetch Profile
+      const profileResult = await db.query("SELECT * FROM student_profiles WHERE user_id = $1", [req.user.userId]);
+      if (profileResult.rows.length === 0) {
         return res.status(404).json({ error: "Student profile not found." });
       }
+      const profile = profileResult.rows[0];
 
-      // Gather completed progress records
-      const progressKeys = Object.keys(rawStore.student_progress);
-      const studentProgress = progressKeys
-        .filter(key => key.startsWith(`${profile.id}_`))
-        .map(key => rawStore.student_progress[key]);
+      // 2. Fetch Progress records
+      const progressResult = await db.query("SELECT * FROM student_progress WHERE student_id = $1", [profile.id]);
+      const studentProgress = progressResult.rows;
 
-      // Gather unlocked badges
-      const badgeKeys = Object.keys(rawStore.student_badges);
-      const unlockedBadges = badgeKeys
-        .filter(key => key.startsWith(`${profile.id}_`))
-        .map(key => rawStore.student_badges[key].badge_id);
+      // 3. Fetch Badges
+      const badgesResult = await db.query("SELECT badge_id FROM student_badges WHERE student_id = $1", [profile.id]);
+      const unlockedBadges = badgesResult.rows.map(row => row.badge_id);
 
       res.json({
         profile: {
