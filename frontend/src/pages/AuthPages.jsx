@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, Mail, User, ArrowRight, ArrowLeft, Gamepad2 } from "lucide-react";
+import { Lock, Mail, User, ArrowRight, ArrowLeft, Gamepad2, Eye, EyeOff } from "lucide-react";
 import { useGame } from "../context/GameContext";
 
 export const AuthPages = () => {
@@ -12,6 +12,7 @@ export const AuthPages = () => {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Redirect if already logged in
@@ -237,13 +238,25 @@ export const AuthPages = () => {
                 <div className="relative">
                   <Lock className="w-4 h-4 text-math-text-muted absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-slate-50 dark:bg-slate-900/60 border border-math-border rounded-2xl py-3.5 pl-11 pr-4 text-sm text-math-text placeholder-slate-400 focus:outline-none focus:border-xp-purple transition-all duration-200"
+                    className="w-full bg-slate-50 dark:bg-slate-900/60 border border-math-border rounded-2xl py-3.5 pl-11 pr-11 text-sm text-math-text placeholder-slate-400 focus:outline-none focus:border-xp-purple transition-all duration-200"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-math-text-muted hover:text-math-text cursor-pointer focus:outline-none transition-colors duration-150"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
               </div>
             )}
