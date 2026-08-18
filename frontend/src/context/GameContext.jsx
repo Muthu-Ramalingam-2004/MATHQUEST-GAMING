@@ -287,38 +287,51 @@ export const GameProvider = ({ children }) => {
 
   // Submit Answer
   const submitAnswer = async (selectedAnswer, isTimedOut = false, timeSpent = 0) => {
-    if (!gameSession) return null;
+    if (!gameSession || !gameSession.questions || !gameSession.questions[gameSession.currentIndex]) {
+      return {
+        isCorrect: false,
+        correctAnswer: "",
+        explanation: "",
+        hint: "",
+        xpReward: 0,
+        coinsReward: 0
+      };
+    }
 
     const currentQuestion = gameSession.questions[gameSession.currentIndex];
     
     // Server validation check
     let isCorrect = false;
-    let correctAnswer = currentQuestion.correctAnswer;
-    let explanation = currentQuestion.explanation;
-    let hint = currentQuestion.hint;
-    let xpReward = currentQuestion.xpReward || 20;
+    let correctAnswer = currentQuestion.correctAnswer || currentQuestion.correct_answer || "";
+    let explanation = currentQuestion.explanation || "";
+    let hint = currentQuestion.hint || "";
+    let xpReward = currentQuestion.xpReward || currentQuestion.xp_reward || 20;
     
     if (offlineMode) {
       // Local verification
       if (!isTimedOut) {
         if (currentQuestion.type === "mcq" || currentQuestion.type === "boolean") {
-          isCorrect = String(selectedAnswer) === String(currentQuestion.correctAnswer);
+          isCorrect = String(selectedAnswer) === String(correctAnswer);
         } else if (currentQuestion.type === "numerical") {
-          isCorrect = String(selectedAnswer).trim().toLowerCase() === String(currentQuestion.correctAnswer).trim().toLowerCase();
+          isCorrect = String(selectedAnswer).trim().toLowerCase() === String(correctAnswer).trim().toLowerCase();
         }
       }
     } else {
       try {
         const valResult = await gameService.validateAnswer(currentQuestion.id, selectedAnswer);
-        isCorrect = valResult.isCorrect;
-        correctAnswer = valResult.correctAnswer;
-        explanation = valResult.explanation;
-        hint = valResult.hint;
-        xpReward = valResult.xpReward;
+        isCorrect = Boolean(valResult?.isCorrect);
+        if (valResult?.correctAnswer !== undefined) correctAnswer = valResult.correctAnswer;
+        if (valResult?.explanation) explanation = valResult.explanation;
+        if (valResult?.hint) hint = valResult.hint;
+        if (valResult?.xpReward !== undefined) xpReward = valResult.xpReward;
       } catch (err) {
         // Fallback to local verification if network fails
         if (!isTimedOut) {
-          isCorrect = String(selectedAnswer) === String(currentQuestion.correctAnswer);
+          if (currentQuestion.type === "mcq" || currentQuestion.type === "boolean") {
+            isCorrect = String(selectedAnswer) === String(correctAnswer);
+          } else if (currentQuestion.type === "numerical") {
+            isCorrect = String(selectedAnswer).trim().toLowerCase() === String(correctAnswer).trim().toLowerCase();
+          }
         }
       }
     }
@@ -341,7 +354,7 @@ export const GameProvider = ({ children }) => {
       xpEarned: gameSession.xpEarned + actualXpReward,
       coinsEarned: gameSession.coinsEarned + coinsReward,
       answersLog: [
-        ...gameSession.answersLog,
+        ...(gameSession.answersLog || []),
         {
           questionId: currentQuestion.id,
           correct: isCorrect,
@@ -364,12 +377,13 @@ export const GameProvider = ({ children }) => {
   };
 
   // Move forward
-  const nextQuestion = () => {
+  const nextQuestion = async () => {
     if (!gameSession) return false;
     const nextIndex = gameSession.currentIndex + 1;
     const isGameOver = gameSession.lives <= 0 || nextIndex >= gameSession.questions.length;
     if (isGameOver) {
-      return finishGame();
+      const results = await finishGame();
+      return results;
     } else {
       setGameSession({ ...gameSession, currentIndex: nextIndex });
       return true;
@@ -386,13 +400,12 @@ export const GameProvider = ({ children }) => {
 
     let sessionResults;
 
-    if (offlineMode) {
-      // Offline local storage progression math
+    const processLocalFinish = () => {
       let finalXp = gameSession.xpEarned;
       let finalCoins = gameSession.coinsEarned;
-      let newStreakValue = user.streak || 0;
+      let newStreakValue = user?.streak || 0;
       
-      if (survived && gameSession.score > 0) {
+      if (survived && gameSession.score > 0 && user) {
         const todayStr = new Date().toDateString();
         if (user.lastPlayedDate !== todayStr) {
           newStreakValue += 1;
@@ -401,20 +414,23 @@ export const GameProvider = ({ children }) => {
         }
       }
 
-      const newXP = user.xp + (survived ? finalXp : Math.floor(finalXp / 3));
-      const newCoins = user.coins + (survived ? finalCoins : 5);
-      const oldLevel = user.level;
-      const levelInfo = calculateLevelInfo(newXP);
-      const didLevelUp = levelInfo.level > oldLevel;
+      const currentXP = user?.xp || 0;
+      const currentCoins = user?.coins || 0;
+      const currentLevel = user?.level || 1;
 
-      const earnedBadges = [...(user.unlockedBadges || [])];
+      const newXP = currentXP + (survived ? finalXp : Math.floor(finalXp / 3));
+      const newCoins = currentCoins + (survived ? finalCoins : 5);
+      const levelInfo = calculateLevelInfo(newXP);
+      const didLevelUp = levelInfo.level > currentLevel;
+
+      const earnedBadges = [...(user?.unlockedBadges || [])];
       if (survived) {
         if (!earnedBadges.includes("first-victory")) earnedBadges.push("first-victory");
         if (accuracy === 100 && !earnedBadges.includes("perfect-score")) earnedBadges.push("perfect-score");
         if (didLevelUp && levelInfo.level >= 2 && !earnedBadges.includes("math-starter")) earnedBadges.push("math-starter");
       }
 
-      const completed = { ...(user.completedChapters || {}) };
+      const completed = { ...(user?.completedChapters || {}) };
       completed[gameSession.chapterId] = {
         completedQuestions: (completed[gameSession.chapterId]?.completedQuestions || 0) + gameSession.score,
         accuracy: Math.max((completed[gameSession.chapterId]?.accuracy || 0), accuracy),
@@ -422,7 +438,7 @@ export const GameProvider = ({ children }) => {
       };
 
       const updatedProfile = {
-        ...user,
+        ...(user || {}),
         xp: newXP,
         coins: newCoins,
         level: levelInfo.level,
@@ -435,7 +451,7 @@ export const GameProvider = ({ children }) => {
       setUser(updatedProfile);
       storageService.saveUserProfile(updatedProfile);
 
-      sessionResults = {
+      return {
         score: gameSession.score,
         totalQuestions: gameSession.questions.length,
         accuracy,
@@ -445,10 +461,13 @@ export const GameProvider = ({ children }) => {
         survived,
         didLevelUp,
         newLevel: levelInfo.level,
-        newBadges: earnedBadges.filter(b => !user.unlockedBadges.includes(b))
+        newBadges: earnedBadges.filter(b => !(user?.unlockedBadges || []).includes(b))
       };
+    };
+
+    if (offlineMode) {
+      sessionResults = processLocalFinish();
     } else {
-      // Backend api flow
       try {
         const response = await gameService.finishSession({
           sessionId: gameSession.id,
@@ -459,16 +478,25 @@ export const GameProvider = ({ children }) => {
           survived
         });
 
-        // Sync local mirror
         const freshProfile = {
-          ...user,
-          xp: response.newLevel * 300 - 300 + (user.xp % 300), // Approximate mock sync
-          level: response.newLevel,
-          streak: response.newStreakValue || user.streak,
-          lastPlayedDate: new Date().toDateString()
+          ...(user || {}),
+          xp: (user?.xp || 0) + (response.xpEarned || 0),
+          coins: (user?.coins || 0) + (response.coinsEarned || 0),
+          level: response.newLevel || user?.level || 1,
+          streak: response.newStreakValue || user?.streak || 0,
+          lastPlayedDate: new Date().toDateString(),
+          completedChapters: {
+            ...(user?.completedChapters || {}),
+            [gameSession.chapterId]: {
+              completedQuestions: ((user?.completedChapters?.[gameSession.chapterId]?.completedQuestions) || 0) + (response.score || 0),
+              accuracy: Math.max((user?.completedChapters?.[gameSession.chapterId]?.accuracy || 0), response.accuracy || 0),
+              timesPlayed: ((user?.completedChapters?.[gameSession.chapterId]?.timesPlayed) || 0) + 1
+            }
+          }
         };
         
         setUser(freshProfile);
+        storageService.saveUserProfile(freshProfile);
         
         sessionResults = {
           score: response.score,
@@ -480,12 +508,11 @@ export const GameProvider = ({ children }) => {
           survived: response.survived,
           didLevelUp: response.didLevelUp,
           newLevel: response.newLevel,
-          newBadges: response.badgesUnlocked
+          newBadges: response.badgesUnlocked || []
         };
       } catch (err) {
-        // Fallback to local on catch
-        setOfflineMode(true);
-        return finishGame();
+        console.warn("Backend finishSession failed, processing local finish:", err);
+        sessionResults = processLocalFinish();
       }
     }
 

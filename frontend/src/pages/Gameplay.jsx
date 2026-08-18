@@ -45,11 +45,10 @@ export const Gameplay = () => {
   const timerRef = useRef(null);
   const startTimeRef = useRef(Date.now());
 
-  // Redirect if no game active
+  // Reset question state when navigating to a new question index
   useEffect(() => {
-    if (!gameSession) {
-      navigate("/dashboard");
-    } else if (gameSession.questions && gameSession.questions.length > 0 && gameSession.questions[gameSession.currentIndex]) {
+    if (!gameSession) return;
+    if (gameSession.questions && gameSession.questions.length > 0 && gameSession.questions[gameSession.currentIndex]) {
       const currentQ = gameSession.questions[gameSession.currentIndex];
       const limit = currentQ?.timeLimit || currentQ?.time_limit || 30;
       setTimeLeft(gameSession.mode === "practice" || gameSession.mode === "math-puzzle" ? 99999 : limit);
@@ -61,7 +60,7 @@ export const Gameplay = () => {
       setIsAnswered(false);
       setFeedback(null);
     }
-  }, [gameSession?.currentIndex, gameSession]);
+  }, [gameSession?.currentIndex]);
 
   // Timer loop
   useEffect(() => {
@@ -131,11 +130,16 @@ export const Gameplay = () => {
   const handleTimeOut = async () => {
     setIsAnswered(true);
     const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
-    const result = await submitAnswer(null, true, timeSpent);
+    let result;
+    try {
+      result = await submitAnswer(null, true, timeSpent);
+    } catch (e) {
+      console.error("submitAnswer error on timeout:", e);
+    }
     setFeedback({
       isCorrect: false,
-      correctAnswer: result.correctAnswer,
-      explanation: result.explanation,
+      correctAnswer: result?.correctAnswer || currentQuestion?.correctAnswer || currentQuestion?.correct_answer || "",
+      explanation: result?.explanation || currentQuestion?.explanation || "",
       xpReward: 0,
       coinsReward: 0,
       isTimedOut: true
@@ -151,20 +155,26 @@ export const Gameplay = () => {
     const answer = value !== undefined ? value : (currentQuestion.type === "numerical" ? numericValue : selectedOption);
     const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
     
-    const result = await submitAnswer(answer, false, timeSpent);
+    let result;
+    try {
+      result = await submitAnswer(answer, false, timeSpent);
+    } catch (e) {
+      console.error("submitAnswer error on submit:", e);
+    }
+
     setFeedback({
-      isCorrect: result.isCorrect,
-      correctAnswer: result.correctAnswer,
-      explanation: result.explanation,
-      xpReward: result.xpReward,
-      coinsReward: result.coinsReward,
+      isCorrect: Boolean(result?.isCorrect),
+      correctAnswer: result?.correctAnswer || currentQuestion?.correctAnswer || currentQuestion?.correct_answer || "",
+      explanation: result?.explanation || currentQuestion?.explanation || "",
+      xpReward: result?.xpReward || 0,
+      coinsReward: result?.coinsReward || 0,
       isTimedOut: false
     });
   };
 
-  const handleNext = () => {
-    const results = nextQuestion();
-    if (typeof results === "object" && results !== null) {
+  const handleNext = async () => {
+    const results = await nextQuestion();
+    if (results && typeof results === "object" && results !== true) {
       setSessionResults(results);
       localStorage.setItem("last_session_result", JSON.stringify(results));
       navigate("/results");
