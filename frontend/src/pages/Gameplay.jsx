@@ -49,8 +49,9 @@ export const Gameplay = () => {
   useEffect(() => {
     if (!gameSession) {
       navigate("/dashboard");
-    } else {
-      const limit = gameSession.questions[gameSession.currentIndex].timeLimit || 30;
+    } else if (gameSession.questions && gameSession.questions.length > 0 && gameSession.questions[gameSession.currentIndex]) {
+      const currentQ = gameSession.questions[gameSession.currentIndex];
+      const limit = currentQ?.timeLimit || currentQ?.time_limit || 30;
       setTimeLeft(gameSession.mode === "practice" || gameSession.mode === "math-puzzle" ? 99999 : limit);
       startTimeRef.current = Date.now();
       
@@ -60,7 +61,7 @@ export const Gameplay = () => {
       setIsAnswered(false);
       setFeedback(null);
     }
-  }, [gameSession?.currentIndex]);
+  }, [gameSession?.currentIndex, gameSession]);
 
   // Timer loop
   useEffect(() => {
@@ -81,11 +82,51 @@ export const Gameplay = () => {
     return () => clearInterval(timerRef.current);
   }, [gameSession?.currentIndex, isAnswered]);
 
-  if (!gameSession) return null;
+  // Safely handle missing gameSession or questions
+  if (!gameSession || !gameSession.questions || gameSession.questions.length === 0 || !gameSession.questions[gameSession.currentIndex]) {
+    return (
+      <div className="max-w-md mx-auto my-12 p-8 bg-math-card border border-math-border rounded-3xl text-center space-y-6 shadow-sm animate-fade-in">
+        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto">
+          <AlertCircle className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h3 className="font-display font-black text-xl text-math-text">No Questions Found</h3>
+          <p className="text-xs text-math-text-muted font-semibold leading-relaxed">
+            We couldn't load any questions for this topic chapter right now. Please select another topic chapter or try again.
+          </p>
+        </div>
+        <div className="flex gap-3 pt-2">
+          <button
+            onClick={() => navigate("/chapters")}
+            className="flex-1 py-3 rounded-2xl bg-xp-purple hover:bg-xp-purple-dark text-white font-bold text-sm shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <ArrowRight className="w-4 h-4 rotate-180" />
+            Back to Syllabus
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const currentQuestion = gameSession.questions[gameSession.currentIndex];
   const questionCount = gameSession.questions.length;
   const progressPercent = Math.floor((gameSession.currentIndex / questionCount) * 100);
+
+  const getOptions = (question) => {
+    if (!question || question.options === null || question.options === undefined) return [];
+    if (Array.isArray(question.options)) return question.options;
+    if (typeof question.options === "string") {
+      try {
+        const parsed = JSON.parse(question.options);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  };
+
+  const currentOptions = getOptions(currentQuestion);
 
   const handleTimeOut = async () => {
     setIsAnswered(true);
@@ -153,8 +194,11 @@ export const Gameplay = () => {
   };
 
   const getChapterName = () => {
-    const chapters = chaptersData[user.class];
-    return chapters.find(c => c.id === gameSession.chapterId)?.name || "MathQuest Lesson";
+    if (!gameSession?.chapterId) return "MathQuest Lesson";
+    const classVal = gameSession?.class || user?.class || user?.class_grade || 9;
+    const chapters = chaptersData[classVal] || chaptersData[9] || chaptersData[10] || [];
+    const found = chapters.find(c => c.id === gameSession.chapterId);
+    return found?.name || "MathQuest Lesson";
   };
 
   return (
@@ -243,7 +287,7 @@ export const Gameplay = () => {
                   >
                     {isActive ? (
                       <div className="w-6 h-6 rounded-full overflow-hidden">
-                        <Avatar name={user.avatar} className="w-full h-full" />
+                        <Avatar name={user?.avatar || "bear"} className="w-full h-full" />
                       </div>
                     ) : (
                       idx + 1
@@ -261,7 +305,7 @@ export const Gameplay = () => {
         
         <div className="flex items-center justify-between">
           <span className="px-2.5 py-1 rounded-full bg-slate-50 dark:bg-slate-800/80 border border-math-border text-[10px] font-bold uppercase tracking-wider text-math-text-muted">
-            Difficulty: {currentQuestion.difficulty}
+            Difficulty: {currentQuestion.difficulty || "Medium"}
           </span>
           
           {gameSession.mode === "math-puzzle" && (
@@ -282,7 +326,7 @@ export const Gameplay = () => {
         <div className="py-2">
           {(currentQuestion.type === "mcq" || currentQuestion.type === "boolean") && (
             <div className="grid md:grid-cols-2 gap-4">
-              {currentQuestion.options.map((option, idx) => {
+              {currentOptions.map((option, idx) => {
                 const isSelected = selectedOption === String(idx);
                 return (
                   <button
@@ -392,7 +436,7 @@ export const Gameplay = () => {
             <Sparkles className="w-5 h-5 text-xp-purple shrink-0 mt-0.5" />
             <div>
               <span className="font-bold block text-xp-purple mb-1">Concept Hint</span>
-              {currentQuestion.hint}
+              {currentQuestion.hint || "Think carefully about the core formulas for this topic."}
             </div>
           </div>
         )}
@@ -440,7 +484,7 @@ export const Gameplay = () => {
                 <span className="font-extrabold uppercase block text-[9px] tracking-wider text-heart-red mb-0.5">Correct Solution:</span>
                 <span className="font-bold text-sm text-math-text">
                   {currentQuestion.type === "mcq" || currentQuestion.type === "boolean"
-                    ? currentQuestion.options[Number(feedback.correctAnswer)]
+                    ? currentOptions[Number(feedback.correctAnswer)] || feedback.correctAnswer
                     : feedback.correctAnswer
                   }
                 </span>
@@ -450,7 +494,7 @@ export const Gameplay = () => {
             <div>
               <span className="font-extrabold uppercase block text-[9px] tracking-wider text-math-text-muted mb-1">Step-by-step Explanation:</span>
               <p className="text-math-text-muted font-semibold">
-                {feedback.explanation}
+                {feedback.explanation || "Review the formula to solve similar questions next time."}
               </p>
             </div>
           </div>

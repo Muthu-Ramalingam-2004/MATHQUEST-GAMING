@@ -31,21 +31,32 @@ export const questionController = {
       const result = await db.query(query, params);
       
       // Format questions for maximum frontend compatibility (mapping both snake_case and camelCase options)
-      const formatted = result.rows.map(q => ({
-        ...q,
-        class: q.class_grade || q.class,
-        class_grade: q.class_grade || q.class,
-        chapterId: q.chapter_id || q.chapter,
-        chapter_id: q.chapter_id || q.chapter,
-        type: q.type || q.question_type,
-        question_type: q.type || q.question_type,
-        correctAnswer: q.correct_answer,
-        correct_answer: q.correct_answer,
-        xpReward: q.xp_reward,
-        xp_reward: q.xp_reward,
-        timeLimit: q.time_limit,
-        time_limit: q.time_limit
-      }));
+      const formatted = result.rows.map(q => {
+        let opts = q.options;
+        if (typeof opts === "string") {
+          try {
+            opts = JSON.parse(opts);
+          } catch (e) {
+            opts = [];
+          }
+        }
+        return {
+          ...q,
+          class: q.class_grade || q.class,
+          class_grade: q.class_grade || q.class,
+          chapterId: q.chapter_id || q.chapter,
+          chapter_id: q.chapter_id || q.chapter,
+          type: q.type || q.question_type,
+          question_type: q.type || q.question_type,
+          options: opts,
+          correctAnswer: q.correct_answer,
+          correct_answer: q.correct_answer,
+          xpReward: q.xp_reward,
+          xp_reward: q.xp_reward,
+          timeLimit: q.time_limit,
+          time_limit: q.time_limit
+        };
+      });
 
       res.json(formatted);
     } catch (err) {

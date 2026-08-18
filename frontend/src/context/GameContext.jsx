@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { storageService } from "../services/storageService";
 import { questionService } from "../services/questionService";
 import { authService } from "../services/authService";
@@ -204,15 +204,21 @@ export const GameProvider = ({ children }) => {
         try {
           console.log(`[GameContext] Fetching questions from API: classGrade=${classId} chapterId=${chapterId}`);
           const result = await gameService.getQuestions(classId, chapterId);
-          console.log(`[GameContext] API returned ${result.length} questions for chapter "${chapterId}"`);
-          // Shuffling logic
-          const shuffled = [...result].sort(() => Math.random() - 0.5);
-          questionsList = mode === "quick-quiz" || mode === "math-run" || mode === "challenge" 
-            ? shuffled.slice(0, 5) 
-            : mode === "math-puzzle" 
-            ? shuffled.slice(0, 3) 
-            : shuffled;
-          console.log(`[GameContext] After mode (${mode}) slicing: ${questionsList.length} questions will be used`);
+          console.log(`[GameContext] API returned ${Array.isArray(result) ? result.length : 0} questions for chapter "${chapterId}"`);
+          
+          if (Array.isArray(result) && result.length > 0) {
+            // Shuffling logic
+            const shuffled = [...result].sort(() => Math.random() - 0.5);
+            questionsList = mode === "quick-quiz" || mode === "math-run" || mode === "challenge" 
+              ? shuffled.slice(0, 5) 
+              : mode === "math-puzzle" 
+              ? shuffled.slice(0, 3) 
+              : shuffled;
+            console.log(`[GameContext] After mode (${mode}) slicing: ${questionsList.length} questions will be used`);
+          } else {
+            console.warn(`[GameContext] API returned 0 questions. Falling back to local questions.`);
+            questionsList = questionService.getQuestionsForGameplay(classId, chapterId, mode);
+          }
         } catch (err) {
           console.warn(`[GameContext] API fetch failed (${err.message}). Falling back to local questions.`);
           // Fallback to local questions if fetch fails
@@ -225,6 +231,22 @@ export const GameProvider = ({ children }) => {
     if (!questionsList || questionsList.length === 0) {
       console.error(`[GameContext] No questions found for class=${classId} chapter="${chapterId}" mode=${mode}`);
       showToast("No questions found for this topic chapter", "warning");
+      setGameSession({
+        id: Date.now(),
+        isActive: false,
+        mode,
+        chapterId,
+        class: Number(classId),
+        questions: [],
+        currentIndex: 0,
+        score: 0,
+        xpEarned: 0,
+        coinsEarned: 0,
+        lives: 3,
+        maxLives: 3,
+        answersLog: [],
+        startTime: Date.now()
+      });
       return false;
     }
 

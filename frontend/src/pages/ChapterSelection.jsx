@@ -117,11 +117,9 @@ export const ChapterSelection = () => {
 
   const executeLaunch = async () => {
     if (!instructionModal) return;
-    const started = await startNewGame(classId, instructionModal.id, activeMode);
-    if (started) {
-      setInstructionModal(null);
-      navigate("/game");
-    }
+    await startNewGame(classId, instructionModal.id, activeMode);
+    setInstructionModal(null);
+    navigate("/game");
   };
 
   return (
