@@ -52,24 +52,28 @@ export const authController = {
 
   // 2. Login Student
   login: async (req, res) => {
-    const { email, password } = req.body;
+    const { email, identifier, username, password } = req.body;
+    const loginId = email || identifier || username;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required." });
+    if (!loginId || !password) {
+      return res.status(400).json({ error: "Username/Email and password are required." });
     }
 
     try {
-      // Find User
-      const userResult = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+      // Find User by email or username (stored as 'name' in student_profiles)
+      const userResult = await db.query(
+        "SELECT u.* FROM users u LEFT JOIN student_profiles sp ON u.id = sp.user_id WHERE u.email = $1 OR sp.name = $1",
+        [loginId]
+      );
       if (userResult.rows.length === 0) {
-        return res.status(400).json({ error: "Invalid email or password credentials." });
+        return res.status(400).json({ error: "Invalid username/email or password." });
       }
       const user = userResult.rows[0];
 
       // Verify Password
       const isMatch = await bcrypt.compare(password, user.password_hash);
       if (!isMatch) {
-        return res.status(400).json({ error: "Invalid email or password credentials." });
+        return res.status(400).json({ error: "Invalid username/email or password." });
       }
 
       // Fetch Profile
