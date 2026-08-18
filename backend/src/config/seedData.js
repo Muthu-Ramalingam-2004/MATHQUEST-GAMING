@@ -1,6 +1,8 @@
-// MathQuest Question Seed Data for Backend Database Simulator
+﻿// MathQuest Question Seed Data for Backend Database Simulator
 
 export const initialQuestions = [
+  // â”€â”€ CLASS 9 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
   // Class 9 - Number System
   {
     id: "q-sys-9-1",
@@ -25,7 +27,7 @@ export const initialQuestions = [
     question: "Find the value of (64)^(1/2).",
     options: null,
     correctAnswer: "8",
-    explanation: "(64)^(1/2) means the square root of 64. Since 8 × 8 = 64, the square root is 8.",
+    explanation: "(64)^(1/2) means the square root of 64. Since 8 Ã— 8 = 64, the square root is 8.",
     hint: "What positive integer multiplied by itself equals 64?",
     xpReward: 30,
     timeLimit: 25
@@ -52,11 +54,11 @@ export const initialQuestions = [
     chapterId: "algebra-9",
     type: "mcq",
     difficulty: "Medium",
-    question: "Factorize completely: x² - 9y².",
+    question: "Factorize completely: xÂ² - 9yÂ².",
     options: ["(x - 3y)(x - 3y)", "(x + 3y)(x - 3y)", "(x + 9y)(x - y)", "(x - 9y)(x + y)"],
     correctAnswer: "1",
-    explanation: "Using the algebraic identity a² - b² = (a + b)(a - b), we write x² - 9y² as x² - (3y)², which factorizes to (x + 3y)(x - 3y).",
-    hint: "Use the difference of squares identity: a² - b² = (a + b)(a - b).",
+    explanation: "Using the algebraic identity aÂ² - bÂ² = (a + b)(a - b), we write xÂ² - 9yÂ² as xÂ² - (3y)Â², which factorizes to (x + 3y)(x - 3y).",
+    hint: "Use the difference of squares identity: aÂ² - bÂ² = (a + b)(a - b).",
     xpReward: 30,
     timeLimit: 30
   },
@@ -66,14 +68,206 @@ export const initialQuestions = [
     chapterId: "algebra-9",
     type: "numerical",
     difficulty: "Hard",
-    question: "If x + y = 5 and xy = 6, find the value of x² + y².",
+    question: "If x + y = 5 and xy = 6, find the value of xÂ² + yÂ².",
     options: null,
     correctAnswer: "13",
-    explanation: "We know that (x + y)² = x² + y² + 2xy. Substituting the values: (5)² = x² + y² + 2(6) => 25 = x² + y² + 12 => x² + y² = 25 - 12 = 13.",
-    hint: "Use the expansion of (x + y)² and substitute the given values.",
+    explanation: "We know that (x + y)Â² = xÂ² + yÂ² + 2xy. Substituting: (5)Â² = xÂ² + yÂ² + 2(6) => 25 = xÂ² + yÂ² + 12 => xÂ² + yÂ² = 13.",
+    hint: "Use the expansion of (x + y)Â² and substitute the given values.",
     xpReward: 50,
     timeLimit: 45
   },
+  {
+    id: "q-alg-9-3",
+    class: 9,
+    chapterId: "algebra-9",
+    type: "mcq",
+    difficulty: "Easy",
+    question: "Which of the following is a polynomial?",
+    options: ["x^(-1) + 2", "âˆšx + 3", "xÂ² + 3x + 1", "1/x"],
+    correctAnswer: "2",
+    explanation: "A polynomial has non-negative integer exponents. xÂ² + 3x + 1 satisfies this. The others involve negative or fractional exponents.",
+    hint: "Check if all the exponents of x are non-negative whole numbers.",
+    xpReward: 20,
+    timeLimit: 20
+  },
+
+  // Class 9 - Coordinate Geometry
+  {
+    id: "q-coo-9-1",
+    class: 9,
+    chapterId: "coord-geom-9",
+    type: "mcq",
+    difficulty: "Easy",
+    question: "In which quadrant does the point (-3, 4) lie?",
+    options: ["Quadrant I", "Quadrant II", "Quadrant III", "Quadrant IV"],
+    correctAnswer: "1",
+    explanation: "In Quadrant II, the x-coordinate is negative and y is positive. For (-3, 4): x = -3 (negative), y = 4 (positive).",
+    hint: "In Quadrant I (+,+), II (-,+), III (-,-), IV (+,-). Check the signs of (-3, 4).",
+    xpReward: 20,
+    timeLimit: 20
+  },
+  {
+    id: "q-coo-9-2",
+    class: 9,
+    chapterId: "coord-geom-9",
+    type: "boolean",
+    difficulty: "Easy",
+    question: "The point (0, 5) lies on the y-axis.",
+    options: ["True", "False"],
+    correctAnswer: "0",
+    explanation: "Any point with x-coordinate = 0 lies on the y-axis. Since the x-coordinate of (0, 5) is 0, it lies on the y-axis.",
+    hint: "A point lies on the y-axis if its x-coordinate is 0.",
+    xpReward: 15,
+    timeLimit: 15
+  },
+  {
+    id: "q-coo-9-3",
+    class: 9,
+    chapterId: "coord-geom-9",
+    type: "numerical",
+    difficulty: "Medium",
+    question: "What is the distance of the point (3, 4) from the origin?",
+    options: null,
+    correctAnswer: "5",
+    explanation: "Distance from origin = âˆš(xÂ² + yÂ²) = âˆš(3Â² + 4Â²) = âˆš(9 + 16) = âˆš25 = 5.",
+    hint: "Use the distance formula: d = âˆš(xÂ² + yÂ²).",
+    xpReward: 25,
+    timeLimit: 25
+  },
+
+  // Class 9 - Geometry
+  {
+    id: "q-geo-9-1",
+    class: 9,
+    chapterId: "geometry-9",
+    type: "mcq",
+    difficulty: "Medium",
+    question: "If two angles of a triangle are 45Â° and 65Â°, what is the third angle?",
+    options: ["60Â°", "70Â°", "80Â°", "90Â°"],
+    correctAnswer: "1",
+    explanation: "Sum of angles of a triangle = 180Â°. Third angle = 180Â° - 45Â° - 65Â° = 70Â°.",
+    hint: "The sum of all interior angles of a triangle is always 180Â°.",
+    xpReward: 25,
+    timeLimit: 20
+  },
+  {
+    id: "q-geo-9-2",
+    class: 9,
+    chapterId: "geometry-9",
+    type: "boolean",
+    difficulty: "Easy",
+    question: "An equilateral triangle has all three angles equal to 60Â°.",
+    options: ["True", "False"],
+    correctAnswer: "0",
+    explanation: "An equilateral triangle has all three sides equal and all three angles equal. Since angles sum to 180Â°, each angle = 180Â°/3 = 60Â°.",
+    hint: "In an equilateral triangle, all sides and angles are equal.",
+    xpReward: 15,
+    timeLimit: 15
+  },
+  {
+    id: "q-geo-9-3",
+    class: 9,
+    chapterId: "geometry-9",
+    type: "mcq",
+    difficulty: "Hard",
+    question: "In triangle ABC, if AB = AC and angle B = 50Â°, find angle A.",
+    options: ["50Â°", "60Â°", "80Â°", "100Â°"],
+    correctAnswer: "2",
+    explanation: "Since AB = AC, the triangle is isosceles. Angle B = Angle C = 50Â°. Angle A = 180Â° - 50Â° - 50Â° = 80Â°.",
+    hint: "In an isosceles triangle, base angles are equal.",
+    xpReward: 35,
+    timeLimit: 30
+  },
+
+  // Class 9 - Mensuration
+  {
+    id: "q-men-9-1",
+    class: 9,
+    chapterId: "mensuration-9",
+    type: "numerical",
+    difficulty: "Medium",
+    question: "Find the area of a triangle with base 8 cm and height 5 cm.",
+    options: null,
+    correctAnswer: "20",
+    explanation: "Area of triangle = (1/2) Ã— base Ã— height = (1/2) Ã— 8 Ã— 5 = 20 cmÂ².",
+    hint: "Area of triangle = (1/2) Ã— base Ã— height.",
+    xpReward: 25,
+    timeLimit: 20
+  },
+  {
+    id: "q-men-9-2",
+    class: 9,
+    chapterId: "mensuration-9",
+    type: "mcq",
+    difficulty: "Easy",
+    question: "What is the perimeter of a rectangle with length 6 cm and width 4 cm?",
+    options: ["10 cm", "20 cm", "24 cm", "48 cm"],
+    correctAnswer: "1",
+    explanation: "Perimeter of rectangle = 2(length + width) = 2(6 + 4) = 2 Ã— 10 = 20 cm.",
+    hint: "Perimeter = 2 Ã— (length + width).",
+    xpReward: 20,
+    timeLimit: 15
+  },
+  {
+    id: "q-men-9-3",
+    class: 9,
+    chapterId: "mensuration-9",
+    type: "numerical",
+    difficulty: "Hard",
+    question: "Find the volume of a cube with side 4 cm.",
+    options: null,
+    correctAnswer: "64",
+    explanation: "Volume of cube = sideÂ³ = 4Â³ = 4 Ã— 4 Ã— 4 = 64 cmÂ³.",
+    hint: "Volume of cube = side Ã— side Ã— side = sideÂ³.",
+    xpReward: 30,
+    timeLimit: 20
+  },
+
+  // Class 9 - Statistics & Probability
+  {
+    id: "q-sta-9-1",
+    class: 9,
+    chapterId: "stats-prob-9",
+    type: "numerical",
+    difficulty: "Easy",
+    question: "Find the mean of: 4, 8, 6, 5, 3, 2, 8, 9, 2, 3.",
+    options: null,
+    correctAnswer: "5",
+    explanation: "Mean = Sum / Count = (4+8+6+5+3+2+8+9+2+3) / 10 = 50 / 10 = 5.",
+    hint: "Mean = (sum of all values) Ã· (number of values).",
+    xpReward: 20,
+    timeLimit: 25
+  },
+  {
+    id: "q-sta-9-2",
+    class: 9,
+    chapterId: "stats-prob-9",
+    type: "mcq",
+    difficulty: "Easy",
+    question: "A fair coin is tossed once. What is the probability of getting Heads?",
+    options: ["0", "1/4", "1/2", "1"],
+    correctAnswer: "2",
+    explanation: "A fair coin has 2 equally likely outcomes: Heads and Tails. P(Heads) = 1/2.",
+    hint: "Probability = (Favourable outcomes) / (Total outcomes).",
+    xpReward: 15,
+    timeLimit: 15
+  },
+  {
+    id: "q-sta-9-3",
+    class: 9,
+    chapterId: "stats-prob-9",
+    type: "boolean",
+    difficulty: "Easy",
+    question: "The probability of an impossible event is 0.",
+    options: ["True", "False"],
+    correctAnswer: "0",
+    explanation: "An impossible event can never occur, so its probability is 0. Probability ranges from 0 (impossible) to 1 (certain).",
+    hint: "Probability is always between 0 and 1 inclusive.",
+    xpReward: 15,
+    timeLimit: 15
+  },
+
+  // â”€â”€ CLASS 10 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   // Class 10 - Real Numbers
   {
@@ -86,7 +280,7 @@ export const initialQuestions = [
     options: null,
     correctAnswer: "45",
     explanation: "Using division algorithm: 225 = 135(1) + 90; 135 = 90(1) + 45; 90 = 45(2) + 0. Since the remainder is now 0, the divisor 45 is the HCF.",
-    hint: "Apply Euclid's lemma recursively: divide 225 by 135, then divide 135 by the remainder, and so on until the remainder is 0.",
+    hint: "Apply Euclid's lemma recursively: divide 225 by 135, then 135 by the remainder, until remainder = 0.",
     xpReward: 35,
     timeLimit: 40
   },
@@ -99,10 +293,68 @@ export const initialQuestions = [
     question: "The product of a non-zero rational and an irrational number is always irrational.",
     options: ["True", "False"],
     correctAnswer: "0",
-    explanation: "If you multiply any non-zero rational number (e.g., 2) by an irrational number (e.g., √3), the product (2√3) cannot be represented as a simple fraction, meaning it is always irrational.",
-    hint: "Try multiplying a simple fraction like 1/2 with √2. Is the result rational?",
+    explanation: "If you multiply any non-zero rational (e.g., 2) by an irrational (e.g., âˆš3), the product (2âˆš3) is always irrational.",
+    hint: "Try multiplying 1/2 with âˆš2. Is the result rational?",
     xpReward: 20,
     timeLimit: 20
+  },
+  {
+    id: "q-real-10-3",
+    class: 10,
+    chapterId: "real-num-10",
+    type: "mcq",
+    difficulty: "Medium",
+    question: "Which of the following is the LCM of 12 and 15?",
+    options: ["30", "45", "60", "90"],
+    correctAnswer: "2",
+    explanation: "LCM(12, 15): 12 = 2Â²Ã—3, 15 = 3Ã—5. LCM = 2Â²Ã—3Ã—5 = 60.",
+    hint: "LCM = product of highest powers of all prime factors.",
+    xpReward: 25,
+    timeLimit: 25
+  },
+
+  // Class 10 - Algebra
+  {
+    id: "q-alg-10-1",
+    class: 10,
+    chapterId: "algebra-10",
+    type: "mcq",
+    difficulty: "Medium",
+    question: "What is the common difference of the AP: 3, 1, -1, -3, ...?",
+    options: ["2", "-2", "1.5", "-1.5"],
+    correctAnswer: "1",
+    explanation: "Common difference d = 1 - 3 = -2.",
+    hint: "Subtract the first term from the second term (term2 - term1).",
+    xpReward: 25,
+    timeLimit: 20
+  },
+  {
+    id: "q-alg-10-2",
+    class: 10,
+    chapterId: "algebra-10",
+    type: "numerical",
+    difficulty: "Hard",
+    question: "Find the sum of the first 10 terms of the AP: 2, 7, 12, ...",
+    options: null,
+    correctAnswer: "245",
+    explanation: "S_n = (n/2)[2a + (n-1)d]. S_10 = (10/2)[2(2) + (9)(5)] = 5[4 + 45] = 5 Ã— 49 = 245.",
+    hint: "Use AP sum formula: S_n = (n/2) Ã— [2a + (n-1)d].",
+    xpReward: 50,
+    timeLimit: 50
+  },
+  {
+    id: "q-alg-10-3",
+    class: 10,
+    chapterId: "algebra-10",
+    type: "mcq",
+    difficulty: "Medium",
+    question: "What are the roots of the quadratic equation xÂ² - 5x + 6 = 0?",
+    options: ["1 and 6", "2 and 3", "-2 and -3", "1 and -6"],
+    correctAnswer: "1",
+    explanation: "Factorize: xÂ² - 5x + 6 = (x - 2)(x - 3) = 0. So x = 2 or x = 3.",
+    hint: "Find two numbers that multiply to 6 and add to -5.",
+    xpReward: 30,
+    timeLimit: 30
   },
 
   // Class 10 - Trigonometry
@@ -112,12 +364,216 @@ export const initialQuestions = [
     chapterId: "trig-10",
     type: "mcq",
     difficulty: "Medium",
-    question: "If sin θ = 3/5, what is the value of cos θ?",
+    question: "If sin Î¸ = 3/5, what is the value of cos Î¸?",
     options: ["4/5", "5/4", "3/4", "4/3"],
     correctAnswer: "0",
-    explanation: "Using trigonometric identity sin² θ + cos² θ = 1: cos² θ = 1 - sin² θ = 1 - (3/5)² = 1 - 9/25 = 16/25. Thus, cos θ = √(16/25) = 4/5.",
-    hint: "Use a right-angled triangle. If opposite = 3 and hypotenuse = 5, find the adjacent side using Pythagoras theorem, then compute adjacent/hypotenuse.",
+    explanation: "cosÂ²Î¸ = 1 - sinÂ²Î¸ = 1 - 9/25 = 16/25. So cos Î¸ = 4/5.",
+    hint: "Use the identity sinÂ²Î¸ + cosÂ²Î¸ = 1.",
     xpReward: 30,
     timeLimit: 30
+  },
+  {
+    id: "q-trig-10-2",
+    class: 10,
+    chapterId: "trig-10",
+    type: "numerical",
+    difficulty: "Hard",
+    question: "Evaluate: (sinÂ² 30Â° + cosÂ² 30Â°) + tan 45Â°.",
+    options: null,
+    correctAnswer: "2",
+    explanation: "sinÂ²Î¸ + cosÂ²Î¸ = 1 for any angle. tan 45Â° = 1. So 1 + 1 = 2.",
+    hint: "Recall: sinÂ²Î¸ + cosÂ²Î¸ = 1, and tan 45Â° = 1.",
+    xpReward: 40,
+    timeLimit: 30
+  },
+  {
+    id: "q-trig-10-3",
+    class: 10,
+    chapterId: "trig-10",
+    type: "mcq",
+    difficulty: "Easy",
+    question: "What is the value of sin 90Â°?",
+    options: ["0", "1/2", "âˆš3/2", "1"],
+    correctAnswer: "3",
+    explanation: "sin 90Â° = 1. This is a standard trigonometric value.",
+    hint: "Recall standard values: sin 0Â°=0, sin 30Â°=1/2, sin 60Â°=âˆš3/2, sin 90Â°=1.",
+    xpReward: 15,
+    timeLimit: 15
+  },
+
+  // Class 10 - Coordinate Geometry
+  {
+    id: "q-cog-10-1",
+    class: 10,
+    chapterId: "coord-geom-10",
+    type: "numerical",
+    difficulty: "Medium",
+    question: "Find the distance between the points (3, 4) and (0, 0).",
+    options: null,
+    correctAnswer: "5",
+    explanation: "Distance = âˆš((3-0)Â² + (4-0)Â²) = âˆš(9 + 16) = âˆš25 = 5.",
+    hint: "Use the distance formula: d = âˆš((xâ‚‚-xâ‚)Â² + (yâ‚‚-yâ‚)Â²).",
+    xpReward: 25,
+    timeLimit: 25
+  },
+  {
+    id: "q-cog-10-2",
+    class: 10,
+    chapterId: "coord-geom-10",
+    type: "mcq",
+    difficulty: "Medium",
+    question: "What are the coordinates of the midpoint of the segment joining (2, 4) and (6, 8)?",
+    options: ["(3, 5)", "(4, 6)", "(8, 12)", "(2, 2)"],
+    correctAnswer: "1",
+    explanation: "Midpoint = ((xâ‚+xâ‚‚)/2, (yâ‚+yâ‚‚)/2) = ((2+6)/2, (4+8)/2) = (4, 6).",
+    hint: "Midpoint formula: ((xâ‚+xâ‚‚)/2, (yâ‚+yâ‚‚)/2).",
+    xpReward: 25,
+    timeLimit: 25
+  },
+  {
+    id: "q-cog-10-3",
+    class: 10,
+    chapterId: "coord-geom-10",
+    type: "numerical",
+    difficulty: "Hard",
+    question: "Find the area of the triangle with vertices A(1,1), B(4,1), C(4,5).",
+    options: null,
+    correctAnswer: "6",
+    explanation: "Area = (1/2)|xâ‚(yâ‚‚-yâ‚ƒ) + xâ‚‚(yâ‚ƒ-yâ‚) + xâ‚ƒ(yâ‚-yâ‚‚)| = (1/2)|1(1-5)+4(5-1)+4(1-1)| = (1/2)|(-4)+16+0| = (1/2)(12) = 6.",
+    hint: "Use the coordinate geometry area formula for a triangle.",
+    xpReward: 40,
+    timeLimit: 40
+  },
+
+  // Class 10 - Geometry & Circles
+  {
+    id: "q-geoc-10-1",
+    class: 10,
+    chapterId: "geometry-10",
+    type: "boolean",
+    difficulty: "Easy",
+    question: "A tangent to a circle is perpendicular to the radius at the point of tangency.",
+    options: ["True", "False"],
+    correctAnswer: "0",
+    explanation: "This is a fundamental theorem: the tangent at any point of a circle is perpendicular to the radius through that point.",
+    hint: "Think about how a tangent line touches the circle at exactly one point.",
+    xpReward: 15,
+    timeLimit: 15
+  },
+  {
+    id: "q-geoc-10-2",
+    class: 10,
+    chapterId: "geometry-10",
+    type: "mcq",
+    difficulty: "Medium",
+    question: "If two tangents are drawn from an external point to a circle, they are:",
+    options: ["Unequal in length", "Equal in length", "Parallel to each other", "Perpendicular to each other"],
+    correctAnswer: "1",
+    explanation: "Tangents drawn from an external point to a circle are equal in length. This is a standard theorem.",
+    hint: "Consider the two right triangles formed by the tangents and the radii.",
+    xpReward: 25,
+    timeLimit: 25
+  },
+  {
+    id: "q-geoc-10-3",
+    class: 10,
+    chapterId: "geometry-10",
+    type: "numerical",
+    difficulty: "Medium",
+    question: "The radius of a circle is 5 cm. What is the length of the diameter?",
+    options: null,
+    correctAnswer: "10",
+    explanation: "Diameter = 2 Ã— radius = 2 Ã— 5 = 10 cm.",
+    hint: "Diameter = 2 Ã— radius.",
+    xpReward: 15,
+    timeLimit: 15
+  },
+
+  // Class 10 - Mensuration (3D)
+  {
+    id: "q-men-10-1",
+    class: 10,
+    chapterId: "mensuration-10",
+    type: "numerical",
+    difficulty: "Medium",
+    question: "Find the volume of a sphere with radius 3 cm. (Use Ï€ = 3.14)",
+    options: null,
+    correctAnswer: "113.04",
+    explanation: "Volume of sphere = (4/3)Ï€rÂ³ = (4/3) Ã— 3.14 Ã— 27 = (4/3) Ã— 84.78 = 113.04 cmÂ³.",
+    hint: "Volume of sphere = (4/3)Ï€rÂ³.",
+    xpReward: 35,
+    timeLimit: 35
+  },
+  {
+    id: "q-men-10-2",
+    class: 10,
+    chapterId: "mensuration-10",
+    type: "mcq",
+    difficulty: "Easy",
+    question: "What is the formula for the curved surface area of a cylinder with radius r and height h?",
+    options: ["2Ï€rÂ²", "Ï€rÂ²h", "2Ï€rh", "2Ï€r(r+h)"],
+    correctAnswer: "2",
+    explanation: "The curved surface area (lateral surface area) of a cylinder = 2Ï€rh. The total surface area would be 2Ï€r(r+h).",
+    hint: "Curved surface area excludes the circular top and bottom.",
+    xpReward: 20,
+    timeLimit: 20
+  },
+  {
+    id: "q-men-10-3",
+    class: 10,
+    chapterId: "mensuration-10",
+    type: "numerical",
+    difficulty: "Hard",
+    question: "A cone has radius 7 cm and slant height 10 cm. Find its curved surface area. (Use Ï€ = 22/7)",
+    options: null,
+    correctAnswer: "220",
+    explanation: "Curved surface area of cone = Ï€rl = (22/7) Ã— 7 Ã— 10 = 22 Ã— 10 = 220 cmÂ².",
+    hint: "CSA of cone = Ï€rl, where r = radius and l = slant height.",
+    xpReward: 40,
+    timeLimit: 40
+  },
+
+  // Class 10 - Statistics & Probability
+  {
+    id: "q-stp-10-1",
+    class: 10,
+    chapterId: "stats-prob-10",
+    type: "mcq",
+    difficulty: "Medium",
+    question: "For the data set {2, 3, 3, 4, 5, 6, 6, 6, 7}, what is the mode?",
+    options: ["3", "4", "6", "5"],
+    correctAnswer: "2",
+    explanation: "The mode is the value that appears most frequently. 6 appears three times, more than any other value.",
+    hint: "Count how many times each value appears. The most frequent one is the mode.",
+    xpReward: 20,
+    timeLimit: 20
+  },
+  {
+    id: "q-stp-10-2",
+    class: 10,
+    chapterId: "stats-prob-10",
+    type: "numerical",
+    difficulty: "Easy",
+    question: "A bag has 3 red and 5 blue balls. What is the probability of drawing a red ball?",
+    options: null,
+    correctAnswer: "0.375",
+    explanation: "P(red) = 3 / (3+5) = 3/8 = 0.375.",
+    hint: "P(event) = Favourable outcomes / Total outcomes.",
+    xpReward: 20,
+    timeLimit: 20
+  },
+  {
+    id: "q-stp-10-3",
+    class: 10,
+    chapterId: "stats-prob-10",
+    type: "boolean",
+    difficulty: "Easy",
+    question: "The sum of all probabilities in a sample space is always 1.",
+    options: ["True", "False"],
+    correctAnswer: "0",
+    explanation: "By definition, the sum of probabilities of all mutually exclusive and exhaustive events in a sample space equals 1.",
+    hint: "Think about tossing a coin: P(H) + P(T) = 1/2 + 1/2 = 1.",
+    xpReward: 15,
+    timeLimit: 15
   }
 ];

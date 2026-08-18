@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+﻿import React, { createContext, useContext, useState, useEffect } from "react";
 import { storageService } from "../services/storageService";
 import { questionService } from "../services/questionService";
 import { authService } from "../services/authService";
@@ -197,10 +197,14 @@ export const GameProvider = ({ children }) => {
       questionsList = customQuestions;
     } else {
       if (offlineMode) {
+        console.log(`[GameContext] Offline mode â€” loading local questions for class=${classId} chapter=${chapterId} mode=${mode}`);
         questionsList = questionService.getQuestionsForGameplay(classId, chapterId, mode);
+        console.log(`[GameContext] Local fallback returned ${questionsList.length} questions`);
       } else {
         try {
+          console.log(`[GameContext] Fetching questions from API: classGrade=${classId} chapterId=${chapterId}`);
           const result = await gameService.getQuestions(classId, chapterId);
+          console.log(`[GameContext] API returned ${result.length} questions for chapter "${chapterId}"`);
           // Shuffling logic
           const shuffled = [...result].sort(() => Math.random() - 0.5);
           questionsList = mode === "quick-quiz" || mode === "math-run" || mode === "challenge" 
@@ -208,17 +212,23 @@ export const GameProvider = ({ children }) => {
             : mode === "math-puzzle" 
             ? shuffled.slice(0, 3) 
             : shuffled;
+          console.log(`[GameContext] After mode (${mode}) slicing: ${questionsList.length} questions will be used`);
         } catch (err) {
+          console.warn(`[GameContext] API fetch failed (${err.message}). Falling back to local questions.`);
           // Fallback to local questions if fetch fails
           questionsList = questionService.getQuestionsForGameplay(classId, chapterId, mode);
+          console.log(`[GameContext] Local fallback returned ${questionsList.length} questions for chapter "${chapterId}"`);
         }
       }
     }
 
     if (!questionsList || questionsList.length === 0) {
+      console.error(`[GameContext] No questions found for class=${classId} chapter="${chapterId}" mode=${mode}`);
       showToast("No questions found for this topic chapter", "warning");
       return false;
     }
+
+    console.log(`[GameContext] Starting game: class=${classId} chapter="${chapterId}" mode=${mode} questions=${questionsList.length}`);
 
     const defaultLives = (mode === "practice" || mode === "math-puzzle") ? 99 : 3;
 
