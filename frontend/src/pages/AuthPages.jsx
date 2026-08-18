@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail, User, ArrowRight, ArrowLeft, Gamepad2, Eye, EyeOff } from "lucide-react";
 import { useGame } from "../context/GameContext";
+import { authService } from "../services/authService";
 
 export const AuthPages = () => {
   const { loginUser, user, showToast } = useGame();
@@ -15,12 +16,28 @@ export const AuthPages = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Password reset states
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
+
   // Redirect if already logged in
   React.useEffect(() => {
     if (user) {
       navigate("/dashboard");
     }
   }, [user, navigate]);
+
+  const handleBackToLogin = () => {
+    setEmail("");
+    setPassword("");
+    setNewPassword("");
+    setConfirmNewPassword("");
+    setResetSuccess(false);
+    setActiveTab("login");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,13 +65,29 @@ export const AuthPages = () => {
       localStorage.setItem("temp_password", password);
       navigate("/setup");
     } else {
-      if (!email) {
-        showToast("Please enter your email", "warning");
+      // Forgot Password form submit logic
+      if (!email || !newPassword || !confirmNewPassword) {
+        showToast("Please fill in all fields", "warning");
         setLoading(false);
         return;
       }
-      showToast("Verification code sent! Check your inbox.", "success");
-      setActiveTab("login");
+      if (newPassword.length < 6) {
+        showToast("Password must be at least 6 characters long", "warning");
+        setLoading(false);
+        return;
+      }
+      if (newPassword !== confirmNewPassword) {
+        showToast("Passwords do not match", "warning");
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await authService.resetPassword(email, newPassword);
+        showToast(response.message || "Password reset successfully!", "success");
+        setResetSuccess(true);
+      } catch (err) {
+        showToast(err.message || "Failed to reset password. Please try again.", "error");
+      }
     }
     setLoading(false);
   };
@@ -138,9 +171,9 @@ export const AuthPages = () => {
           )}
 
           {/* BACK TO LOGIN FOR FORGOT STATE */}
-          {activeTab === "forgot" && (
+          {activeTab === "forgot" && !resetSuccess && (
             <button
-              onClick={() => setActiveTab("login")}
+              onClick={handleBackToLogin}
               className="flex items-center gap-1.5 text-xs font-semibold text-math-text-muted hover:text-math-text mb-6 cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" /> Back to Login
@@ -151,128 +184,209 @@ export const AuthPages = () => {
           <h3 className="font-display font-bold text-2xl text-math-text mb-1">
             {activeTab === "login" && "Welcome Back!"}
             {activeTab === "signup" && "Create Student Profile"}
-            {activeTab === "forgot" && "Recover Account"}
+            {activeTab === "forgot" && (resetSuccess ? "Reset Successful!" : "Reset Password")}
           </h3>
           <p className="text-xs text-math-text-muted mb-6">
             {activeTab === "login" && "Enter your credentials to enter the arena."}
             {activeTab === "signup" && "Let's set up your profile and get playing."}
-            {activeTab === "forgot" && "We will send instructions to reset your password."}
+            {activeTab === "forgot" && (resetSuccess ? "Your password has been successfully updated." : "Enter your registered email and new password.")}
           </p>
 
           {/* FORM BODY */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email Field (Signup & Forgot) or Username for Login */}
-            {activeTab === "login" ? (
-              <div>
-                <label className="block text-xs font-bold text-math-text-muted uppercase tracking-wider mb-2">
-                  Email Address / Username
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-math-text-muted absolute left-4 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="student@mathquest.com"
-                    className="w-full bg-slate-50 dark:bg-slate-900/60 border border-math-border rounded-2xl py-3.5 pl-11 pr-4 text-sm text-math-text placeholder-slate-400 focus:outline-none focus:border-xp-purple transition-all duration-200"
-                  />
-                </div>
+          {resetSuccess && activeTab === "forgot" ? (
+            <div className="space-y-6 text-center">
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 rounded-2xl">
+                <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                  Password reset successfully. You can now login with your new password.
+                </p>
               </div>
-            ) : (
-              <div>
-                <label className="block text-xs font-bold text-math-text-muted uppercase tracking-wider mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-math-text-muted absolute left-4 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="student@mathquest.com"
-                    className="w-full bg-slate-50 dark:bg-slate-900/60 border border-math-border rounded-2xl py-3.5 pl-11 pr-4 text-sm text-math-text placeholder-slate-400 focus:outline-none focus:border-xp-purple transition-all duration-200"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Nickname / Username Field (Signup Only) */}
-            {activeTab === "signup" && (
-              <div>
-                <label className="block text-xs font-bold text-math-text-muted uppercase tracking-wider mb-2">
-                  Nickname / Username
-                </label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-math-text-muted absolute left-4 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter nickname..."
-                    className="w-full bg-slate-50 dark:bg-slate-900/60 border border-math-border rounded-2xl py-3.5 pl-11 pr-4 text-sm text-math-text placeholder-slate-400 focus:outline-none focus:border-xp-purple transition-all duration-200"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Password Field (Login & Signup) */}
-            {activeTab !== "forgot" && (
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="text-xs font-bold text-math-text-muted uppercase tracking-wider">
-                    Password
+              <button
+                type="button"
+                onClick={handleBackToLogin}
+                className="w-full py-4 rounded-2xl bg-xp-purple hover:bg-xp-purple-dark text-white font-bold text-sm shadow-md transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer animate-pulse-slow"
+              >
+                <span>Back to Login</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Email Field (Signup & Forgot) or Username for Login */}
+              {activeTab === "login" ? (
+                <div>
+                  <label className="block text-xs font-bold text-math-text-muted uppercase tracking-wider mb-2">
+                    Email Address / Username
                   </label>
-                  {activeTab === "login" && (
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-math-text-muted absolute left-4 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="student@mathquest.com"
+                      className="w-full bg-slate-50 dark:bg-slate-900/60 border border-math-border rounded-2xl py-3.5 pl-11 pr-4 text-sm text-math-text placeholder-slate-400 focus:outline-none focus:border-xp-purple transition-all duration-200"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-bold text-math-text-muted uppercase tracking-wider mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-math-text-muted absolute left-4 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="student@mathquest.com"
+                      className="w-full bg-slate-50 dark:bg-slate-900/60 border border-math-border rounded-2xl py-3.5 pl-11 pr-4 text-sm text-math-text placeholder-slate-400 focus:outline-none focus:border-xp-purple transition-all duration-200"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Nickname / Username Field (Signup Only) */}
+              {activeTab === "signup" && (
+                <div>
+                  <label className="block text-xs font-bold text-math-text-muted uppercase tracking-wider mb-2">
+                    Nickname / Username
+                  </label>
+                  <div className="relative">
+                    <User className="w-4 h-4 text-math-text-muted absolute left-4 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      required
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Enter nickname..."
+                      className="w-full bg-slate-50 dark:bg-slate-900/60 border border-math-border rounded-2xl py-3.5 pl-11 pr-4 text-sm text-math-text placeholder-slate-400 focus:outline-none focus:border-xp-purple transition-all duration-200"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Password Field (Login & Signup) */}
+              {activeTab !== "forgot" && (
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-xs font-bold text-math-text-muted uppercase tracking-wider">
+                      Password
+                    </label>
+                    {activeTab === "login" && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("forgot")}
+                        className="text-xs text-xp-purple hover:underline font-bold cursor-pointer"
+                      >
+                        Forgot?
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-math-text-muted absolute left-4 top-1/2 -translate-y-1/2" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-slate-50 dark:bg-slate-900/60 border border-math-border rounded-2xl py-3.5 pl-11 pr-11 text-sm text-math-text placeholder-slate-400 focus:outline-none focus:border-xp-purple transition-all duration-200"
+                    />
                     <button
                       type="button"
-                      onClick={() => setActiveTab("forgot")}
-                      className="text-xs text-xp-purple hover:underline font-bold cursor-pointer"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-math-text-muted hover:text-math-text cursor-pointer focus:outline-none transition-colors duration-150"
                     >
-                      Forgot?
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </button>
-                  )}
+                  </div>
                 </div>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-math-text-muted absolute left-4 top-1/2 -translate-y-1/2" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-slate-50 dark:bg-slate-900/60 border border-math-border rounded-2xl py-3.5 pl-11 pr-11 text-sm text-math-text placeholder-slate-400 focus:outline-none focus:border-xp-purple transition-all duration-200"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-math-text-muted hover:text-math-text cursor-pointer focus:outline-none transition-colors duration-150"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
+              )}
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-4 rounded-2xl bg-xp-purple hover:bg-xp-purple-dark text-white font-bold text-sm shadow-md transition-all duration-200 flex items-center justify-center gap-2 mt-6 cursor-pointer disabled:opacity-50"
-            >
-              <span>
-                {loading ? "Please wait..." : activeTab === "login" ? "Enter Arena" : activeTab === "signup" ? "Next: Select Avatar" : "Reset Password"}
-              </span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </form>
+              {/* New Password and Confirm New Password Fields (Forgot Password Only) */}
+              {activeTab === "forgot" && (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-math-text-muted uppercase tracking-wider mb-2">
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 text-math-text-muted absolute left-4 top-1/2 -translate-y-1/2" />
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        required
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full bg-slate-50 dark:bg-slate-900/60 border border-math-border rounded-2xl py-3.5 pl-11 pr-11 text-sm text-math-text placeholder-slate-400 focus:outline-none focus:border-xp-purple transition-all duration-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        aria-label={showNewPassword ? "Hide password" : "Show password"}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-math-text-muted hover:text-math-text cursor-pointer focus:outline-none transition-colors duration-150"
+                      >
+                        {showNewPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-math-text-muted uppercase tracking-wider mb-2">
+                      Confirm New Password
+                    </label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 text-math-text-muted absolute left-4 top-1/2 -translate-y-1/2" />
+                      <input
+                        type={showConfirmNewPassword ? "text" : "password"}
+                        required
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full bg-slate-50 dark:bg-slate-900/60 border border-math-border rounded-2xl py-3.5 pl-11 pr-11 text-sm text-math-text placeholder-slate-400 focus:outline-none focus:border-xp-purple transition-all duration-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                        aria-label={showConfirmNewPassword ? "Hide password" : "Show password"}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-math-text-muted hover:text-math-text cursor-pointer focus:outline-none transition-colors duration-150"
+                      >
+                        {showConfirmNewPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 rounded-2xl bg-xp-purple hover:bg-xp-purple-dark text-white font-bold text-sm shadow-md transition-all duration-200 flex items-center justify-center gap-2 mt-6 cursor-pointer disabled:opacity-50"
+              >
+                <span>
+                  {loading ? "Please wait..." : activeTab === "login" ? "Enter Arena" : activeTab === "signup" ? "Next: Select Avatar" : "Reset Password"}
+                </span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+          )}
 
           {/* DEMO BYPASS BANNER */}
           {activeTab === "login" && (

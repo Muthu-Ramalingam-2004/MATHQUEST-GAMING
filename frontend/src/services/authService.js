@@ -24,6 +24,11 @@ export const authService = {
     return await api.get("/auth/me");
   },
 
+  // Reset password
+  resetPassword: async (email, newPassword) => {
+    return await api.post("/auth/reset-password", { email, newPassword });
+  },
+
   // Log out student
   logout: () => {
     setAuthToken(null);

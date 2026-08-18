@@ -106,5 +106,41 @@ export const authController = {
       console.error(err);
       res.status(500).json({ error: "Server error fetching profile details." });
     }
+  },
+
+  // 4. Reset User Password
+  resetPassword: async (req, res) => {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({ error: "Email and new password are required." });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters long." });
+    }
+
+    try {
+      // Find User
+      const userResult = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+      if (userResult.rows.length === 0) {
+        return res.status(400).json({ error: "No account found with this email address." });
+      }
+      const user = userResult.rows[0];
+
+      // Hash password
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash(newPassword, salt);
+
+      // Update User Password
+      await db.query("UPDATE users SET password_hash = $1 WHERE id = $2", [hash, user.id]);
+
+      res.json({
+        message: "Password reset successfully. You can now login with your new password."
+      });
+    } catch (err) {
+      console.error("[ERROR] Server error during password reset:", err.message);
+      res.status(500).json({ error: "Server error during password reset." });
+    }
   }
 };
