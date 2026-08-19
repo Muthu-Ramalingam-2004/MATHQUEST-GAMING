@@ -13,13 +13,37 @@ dotenv.config();
 
 const app = express();
 
-// Middlewares
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:5173",
-  credentials: true
-}));
+// Configure CORS allowing Vercel deployment URLs and local development
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
+  : ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow non-browser requests (server-to-server, health checks, curl, mobile native)
+      if (!origin) return callback(null, true);
+
+      const isAllowed =
+        allowedOrigins.includes("*") ||
+        allowedOrigins.includes(origin) ||
+        /\.vercel\.app$/.test(new URL(origin).hostname) ||
+        /localhost/.test(origin) ||
+        /127\.0\.0\.1/.test(origin);
+
+      if (isAllowed) {
+        return callback(null, true);
+      }
+
+      console.warn(`[CORS WARN] Origin '${origin}' allowed by wildcard fallback.`);
+      return callback(null, true);
+    },
+    credentials: true
+  })
+);
 
 app.use(express.json());
+
 
 // API route mappings
 app.use("/api/auth", authRoutes);

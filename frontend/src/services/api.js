@@ -1,18 +1,13 @@
 // Centralized Frontend API Client
 const getApiBaseUrl = () => {
-  const envUrl = import.meta.env.VITE_API_URL;
-  if (envUrl && envUrl !== "http://localhost:5000") {
-    return `${envUrl}/api`;
+  let envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl && envUrl.trim()) {
+    envUrl = envUrl.trim().replace(/\/+$/, "");
+    return envUrl.endsWith("/api") ? envUrl : `${envUrl}/api`;
   }
-  if (typeof window !== "undefined" && window.location && window.location.hostname) {
-    const hostname = window.location.hostname;
-    if (hostname !== "localhost" && hostname !== "127.0.0.1") {
-      const protocol = window.location.protocol;
-      return `${protocol}//${hostname}:5000/api`;
-    }
-  }
-  return `${envUrl || "http://localhost:5000"}/api`;
+  return "http://localhost:5000/api";
 };
+
 
 export const getAuthToken = () => localStorage.getItem("mathquest_token");
 export const setAuthToken = (token) => {
