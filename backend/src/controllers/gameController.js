@@ -1,4 +1,5 @@
 import { db } from "../config/db.js";
+import { getFullUserProfile } from "./authController.js";
 
 export const gameController = {
   // 1. Start Game Session
@@ -146,6 +147,9 @@ export const gameController = {
         );
       }
 
+      // Fetch authoritative updated profile from PostgreSQL
+      const updatedProfile = await getFullUserProfile(req.user.userId);
+
       res.json({
         message: "Level completed successfully!",
         score,
@@ -157,7 +161,8 @@ export const gameController = {
         didLevelUp,
         newLevel,
         streakBonusApplied,
-        badgesUnlocked
+        badgesUnlocked,
+        profile: updatedProfile
       });
     } catch (err) {
       console.error(err);
@@ -165,3 +170,4 @@ export const gameController = {
     }
   }
 };
+

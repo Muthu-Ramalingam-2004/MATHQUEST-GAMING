@@ -32,26 +32,22 @@ export const GameProvider = ({ children }) => {
   useEffect(() => {
     const initializeSession = async () => {
       try {
-        // Try requesting user profile from JWT
         const token = localStorage.getItem("mathquest_token");
         if (token) {
           const data = await authService.getMe();
-          setUser(data.profile);
-          setOfflineMode(false);
-          setOfflineStatus(false);
-        } else {
-          // Fallback to local storage profile if no token
-          const localProfile = storageService.getUserProfile();
-          if (localProfile) {
-            setUser(checkStreak(localProfile));
+          if (data && data.profile) {
+            setUser(data.profile);
+            storageService.saveUserProfile(data.profile);
+          } else {
+            localStorage.removeItem("mathquest_token");
+            setUser(null);
           }
+        } else {
+          setUser(null);
         }
       } catch (err) {
-        // If server is down, fallback to local storage profile
-        const localProfile = storageService.getUserProfile();
-        if (localProfile) {
-          setUser(checkStreak(localProfile));
-        }
+        localStorage.removeItem("mathquest_token");
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -98,31 +94,6 @@ export const GameProvider = ({ children }) => {
   // Auth Operations
   const loginUser = async (emailOrName, password, mode = "login", username = "") => {
     setLoading(true);
-    
-    // Offline Bypass Mode
-    if (offlineMode) {
-      const existing = storageService.getUserProfile();
-      const mockProfile = {
-        name: emailOrName.split("@")[0],
-        avatar: "bear",
-        class: 10,
-        xp: existing ? existing.xp : 0,
-        coins: existing ? existing.coins : 50,
-        level: existing ? existing.level : 1,
-        streak: existing ? existing.streak : 0,
-        lastPlayedDate: existing ? existing.lastPlayedDate : null,
-        dailyGoal: 50,
-        unlockedBadges: existing ? existing.unlockedBadges : [],
-        soundEnabled: true,
-        darkMode: false,
-        completedChapters: {}
-      };
-      setUser(mockProfile);
-      storageService.saveUserProfile(mockProfile);
-      setLoading(false);
-      showToast(`Welcome (Offline Sim), ${mockProfile.name}!`, "success");
-      return true;
-    }
 
     try {
       let data;
@@ -132,11 +103,15 @@ export const GameProvider = ({ children }) => {
         data = await authService.login(emailOrName, password);
       }
       
-      setUser(data.profile);
-      storageService.saveUserProfile(data.profile); // Sync local mirror
-      showToast(`Successfully logged in as ${data.profile.name}!`, "success");
-      setLoading(false);
-      return true;
+      if (data && data.profile) {
+        setUser(data.profile);
+        storageService.saveUserProfile(data.profile); // Sync local mirror
+        showToast(`Welcome back, ${data.profile.name}!`, "success");
+        setLoading(false);
+        return true;
+      } else {
+        throw new Error("Invalid response from server.");
+      }
     } catch (err) {
       setLoading(false);
       showToast(err.message || "Authentication failed.", "error");
@@ -158,17 +133,19 @@ export const GameProvider = ({ children }) => {
     setUser(localUpdated);
     storageService.saveUserProfile(localUpdated);
 
-    if (!offlineMode) {
-      try {
-        await progressService.updateProfile({
-          name: localUpdated.name,
-          avatar: localUpdated.avatar,
-          class_grade: localUpdated.class,
-          daily_goal: localUpdated.dailyGoal
-        });
-      } catch (err) {
-        console.error("Failed to sync profile update with backend:", err);
+    try {
+      const resp = await progressService.updateProfile({
+        name: updates.name || localUpdated.name,
+        avatar: updates.avatar || localUpdated.avatar,
+        class_grade: updates.class || updates.class_grade || localUpdated.class,
+        daily_goal: updates.dailyGoal || updates.daily_goal || localUpdated.dailyGoal
+      });
+      if (resp && resp.profile) {
+        setUser(resp.profile);
+        storageService.saveUserProfile(resp.profile);
       }
+    } catch (err) {
+      console.error("Failed to sync profile update with backend:", err);
     }
   };
 
@@ -196,35 +173,25 @@ export const GameProvider = ({ children }) => {
     if (customQuestions) {
       questionsList = customQuestions;
     } else {
-      if (offlineMode) {
-        console.log(`[GameContext] Offline mode â€” loading local questions for class=${classId} chapter=${chapterId} mode=${mode}`);
-        questionsList = questionService.getQuestionsForGameplay(classId, chapterId, mode);
-        console.log(`[GameContext] Local fallback returned ${questionsList.length} questions`);
-      } else {
-        try {
-          console.log(`[GameContext] Fetching questions from API: classGrade=${classId} chapterId=${chapterId}`);
-          const result = await gameService.getQuestions(classId, chapterId);
-          console.log(`[GameContext] API returned ${Array.isArray(result) ? result.length : 0} questions for chapter "${chapterId}"`);
-          
-          if (Array.isArray(result) && result.length > 0) {
-            // Shuffling logic
-            const shuffled = [...result].sort(() => Math.random() - 0.5);
-            questionsList = mode === "quick-quiz" || mode === "math-run" || mode === "challenge" 
-              ? shuffled.slice(0, 5) 
-              : mode === "math-puzzle" 
-              ? shuffled.slice(0, 3) 
-              : shuffled;
-            console.log(`[GameContext] After mode (${mode}) slicing: ${questionsList.length} questions will be used`);
-          } else {
-            console.warn(`[GameContext] API returned 0 questions. Falling back to local questions.`);
-            questionsList = questionService.getQuestionsForGameplay(classId, chapterId, mode);
-          }
-        } catch (err) {
-          console.warn(`[GameContext] API fetch failed (${err.message}). Falling back to local questions.`);
-          // Fallback to local questions if fetch fails
+      try {
+        console.log(`[GameContext] Fetching questions from API: classGrade=${classId} chapterId=${chapterId}`);
+        const result = await gameService.getQuestions(classId, chapterId);
+        
+        if (Array.isArray(result) && result.length > 0) {
+          // Shuffling logic
+          const shuffled = [...result].sort(() => Math.random() - 0.5);
+          questionsList = mode === "quick-quiz" || mode === "math-run" || mode === "challenge" 
+            ? shuffled.slice(0, 5) 
+            : mode === "math-puzzle" 
+            ? shuffled.slice(0, 3) 
+            : shuffled;
+        } else {
+          console.warn(`[GameContext] API returned 0 questions. Falling back to local questions.`);
           questionsList = questionService.getQuestionsForGameplay(classId, chapterId, mode);
-          console.log(`[GameContext] Local fallback returned ${questionsList.length} questions for chapter "${chapterId}"`);
         }
+      } catch (err) {
+        console.warn(`[GameContext] API fetch failed (${err.message}). Falling back to local questions.`);
+        questionsList = questionService.getQuestionsForGameplay(classId, chapterId, mode);
       }
     }
 
@@ -250,19 +217,17 @@ export const GameProvider = ({ children }) => {
       return false;
     }
 
-    console.log(`[GameContext] Starting game: class=${classId} chapter="${chapterId}" mode=${mode} questions=${questionsList.length}`);
-
     const defaultLives = (mode === "practice" || mode === "math-puzzle") ? 99 : 3;
 
     // Start Session on server
     let sessionId = Date.now();
-    if (!offlineMode) {
-      try {
-        const sessionResult = await gameService.startSession(chapterId, mode);
+    try {
+      const sessionResult = await gameService.startSession(chapterId, mode);
+      if (sessionResult && sessionResult.id) {
         sessionId = sessionResult.id;
-      } catch (err) {
-        console.error("Failed to register game session on backend:", err);
       }
+    } catch (err) {
+      console.error("Failed to register game session on backend:", err);
     }
 
     setGameSession({
@@ -307,31 +272,20 @@ export const GameProvider = ({ children }) => {
     let hint = currentQuestion.hint || "";
     let xpReward = currentQuestion.xpReward || currentQuestion.xp_reward || 20;
     
-    if (offlineMode) {
-      // Local verification
+    try {
+      const valResult = await gameService.validateAnswer(currentQuestion.id, selectedAnswer);
+      isCorrect = Boolean(valResult?.isCorrect);
+      if (valResult?.correctAnswer !== undefined) correctAnswer = valResult.correctAnswer;
+      if (valResult?.explanation) explanation = valResult.explanation;
+      if (valResult?.hint) hint = valResult.hint;
+      if (valResult?.xpReward !== undefined) xpReward = valResult.xpReward;
+    } catch (err) {
+      // Fallback to local verification if network fails
       if (!isTimedOut) {
         if (currentQuestion.type === "mcq" || currentQuestion.type === "boolean") {
           isCorrect = String(selectedAnswer) === String(correctAnswer);
         } else if (currentQuestion.type === "numerical") {
           isCorrect = String(selectedAnswer).trim().toLowerCase() === String(correctAnswer).trim().toLowerCase();
-        }
-      }
-    } else {
-      try {
-        const valResult = await gameService.validateAnswer(currentQuestion.id, selectedAnswer);
-        isCorrect = Boolean(valResult?.isCorrect);
-        if (valResult?.correctAnswer !== undefined) correctAnswer = valResult.correctAnswer;
-        if (valResult?.explanation) explanation = valResult.explanation;
-        if (valResult?.hint) hint = valResult.hint;
-        if (valResult?.xpReward !== undefined) xpReward = valResult.xpReward;
-      } catch (err) {
-        // Fallback to local verification if network fails
-        if (!isTimedOut) {
-          if (currentQuestion.type === "mcq" || currentQuestion.type === "boolean") {
-            isCorrect = String(selectedAnswer) === String(correctAnswer);
-          } else if (currentQuestion.type === "numerical") {
-            isCorrect = String(selectedAnswer).trim().toLowerCase() === String(correctAnswer).trim().toLowerCase();
-          }
         }
       }
     }
@@ -400,120 +354,51 @@ export const GameProvider = ({ children }) => {
 
     let sessionResults;
 
-    const processLocalFinish = () => {
-      let finalXp = gameSession.xpEarned;
-      let finalCoins = gameSession.coinsEarned;
-      let newStreakValue = user?.streak || 0;
+    try {
+      const response = await gameService.finishSession({
+        sessionId: gameSession.id,
+        score: gameSession.score,
+        totalQuestions: gameSession.questions.length,
+        xpEarned: gameSession.xpEarned,
+        coinsEarned: gameSession.coinsEarned,
+        survived
+      });
+
+      if (response && response.profile) {
+        setUser(response.profile);
+        storageService.saveUserProfile(response.profile);
+      }
       
-      if (survived && gameSession.score > 0 && user) {
-        const todayStr = new Date().toDateString();
-        if (user.lastPlayedDate !== todayStr) {
-          newStreakValue += 1;
-          finalXp += 20;
-          finalCoins += 10;
-        }
-      }
-
+      sessionResults = {
+        score: response.score,
+        totalQuestions: response.totalQuestions,
+        accuracy: response.accuracy,
+        xpEarned: response.xpEarned,
+        coinsEarned: response.coinsEarned,
+        timeTaken,
+        survived: response.survived,
+        didLevelUp: response.didLevelUp,
+        newLevel: response.newLevel,
+        newBadges: response.badgesUnlocked || []
+      };
+    } catch (err) {
+      console.error("Backend finishSession failed:", err);
+      // Construct fallback results if network drops
       const currentXP = user?.xp || 0;
-      const currentCoins = user?.coins || 0;
-      const currentLevel = user?.level || 1;
-
-      const newXP = currentXP + (survived ? finalXp : Math.floor(finalXp / 3));
-      const newCoins = currentCoins + (survived ? finalCoins : 5);
+      const newXP = currentXP + (survived ? gameSession.xpEarned : Math.floor(gameSession.xpEarned / 3));
       const levelInfo = calculateLevelInfo(newXP);
-      const didLevelUp = levelInfo.level > currentLevel;
-
-      const earnedBadges = [...(user?.unlockedBadges || [])];
-      if (survived) {
-        if (!earnedBadges.includes("first-victory")) earnedBadges.push("first-victory");
-        if (accuracy === 100 && !earnedBadges.includes("perfect-score")) earnedBadges.push("perfect-score");
-        if (didLevelUp && levelInfo.level >= 2 && !earnedBadges.includes("math-starter")) earnedBadges.push("math-starter");
-      }
-
-      const completed = { ...(user?.completedChapters || {}) };
-      completed[gameSession.chapterId] = {
-        completedQuestions: (completed[gameSession.chapterId]?.completedQuestions || 0) + gameSession.score,
-        accuracy: Math.max((completed[gameSession.chapterId]?.accuracy || 0), accuracy),
-        timesPlayed: (completed[gameSession.chapterId]?.timesPlayed || 0) + 1
-      };
-
-      const updatedProfile = {
-        ...(user || {}),
-        xp: newXP,
-        coins: newCoins,
-        level: levelInfo.level,
-        streak: newStreakValue,
-        lastPlayedDate: new Date().toDateString(),
-        unlockedBadges: earnedBadges,
-        completedChapters: completed
-      };
-
-      setUser(updatedProfile);
-      storageService.saveUserProfile(updatedProfile);
-
-      return {
+      sessionResults = {
         score: gameSession.score,
         totalQuestions: gameSession.questions.length,
         accuracy,
-        xpEarned: survived ? finalXp : Math.floor(finalXp / 3),
-        coinsEarned: survived ? finalCoins : 5,
+        xpEarned: survived ? gameSession.xpEarned : Math.floor(gameSession.xpEarned / 3),
+        coinsEarned: survived ? gameSession.coinsEarned : 5,
         timeTaken,
         survived,
-        didLevelUp,
+        didLevelUp: levelInfo.level > (user?.level || 1),
         newLevel: levelInfo.level,
-        newBadges: earnedBadges.filter(b => !(user?.unlockedBadges || []).includes(b))
+        newBadges: []
       };
-    };
-
-    if (offlineMode) {
-      sessionResults = processLocalFinish();
-    } else {
-      try {
-        const response = await gameService.finishSession({
-          sessionId: gameSession.id,
-          score: gameSession.score,
-          totalQuestions: gameSession.questions.length,
-          xpEarned: gameSession.xpEarned,
-          coinsEarned: gameSession.coinsEarned,
-          survived
-        });
-
-        const freshProfile = {
-          ...(user || {}),
-          xp: (user?.xp || 0) + (response.xpEarned || 0),
-          coins: (user?.coins || 0) + (response.coinsEarned || 0),
-          level: response.newLevel || user?.level || 1,
-          streak: response.newStreakValue || user?.streak || 0,
-          lastPlayedDate: new Date().toDateString(),
-          completedChapters: {
-            ...(user?.completedChapters || {}),
-            [gameSession.chapterId]: {
-              completedQuestions: ((user?.completedChapters?.[gameSession.chapterId]?.completedQuestions) || 0) + (response.score || 0),
-              accuracy: Math.max((user?.completedChapters?.[gameSession.chapterId]?.accuracy || 0), response.accuracy || 0),
-              timesPlayed: ((user?.completedChapters?.[gameSession.chapterId]?.timesPlayed) || 0) + 1
-            }
-          }
-        };
-        
-        setUser(freshProfile);
-        storageService.saveUserProfile(freshProfile);
-        
-        sessionResults = {
-          score: response.score,
-          totalQuestions: response.totalQuestions,
-          accuracy: response.accuracy,
-          xpEarned: response.xpEarned,
-          coinsEarned: response.coinsEarned,
-          timeTaken,
-          survived: response.survived,
-          didLevelUp: response.didLevelUp,
-          newLevel: response.newLevel,
-          newBadges: response.badgesUnlocked || []
-        };
-      } catch (err) {
-        console.warn("Backend finishSession failed, processing local finish:", err);
-        sessionResults = processLocalFinish();
-      }
     }
 
     setGameSession(null);

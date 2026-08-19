@@ -60,13 +60,13 @@ export const ProfileSetup = () => {
         navigate("/dashboard");
       }
     } else {
-      // Fallback Demo Login
-      await loginUser(nickname, selectedClass, selectedAvatar, dailyGoal);
-      navigate("/dashboard");
+      showToast("Registration session expired. Please sign up again.", "warning");
+      navigate("/auth");
     }
     
     setLoading(false);
   };
+
 
   const goals = [
     { value: 30, label: "Casual (30 XP)", desc: "1 game / day" },
